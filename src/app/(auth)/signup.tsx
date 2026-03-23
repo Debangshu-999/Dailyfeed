@@ -48,7 +48,7 @@ export default function LoginScreen() {
 
     setErrors(tempErr)
 
-    return Object.keys(tempErr).length === 0
+    return Object.values(tempErr).every(value => value === "")
   }
 
   const handleChange = (key: keyof FormData, value: string) => {
@@ -59,7 +59,7 @@ export default function LoginScreen() {
   };
 
   const handleSignup = async() => {
-    if(!validateForm){
+    if(!validateForm()){
         Alert.alert("Error", "Please fill up the form")
     }
   }
