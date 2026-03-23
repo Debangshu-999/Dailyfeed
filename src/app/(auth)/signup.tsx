@@ -38,8 +38,13 @@ export default function LoginScreen() {
 
   const validateForm = () => {
     let tempErr: FormError = {...ERR_FORM}
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if(!form.email.trim()){
         tempErr.email = "Email is required"
+    }
+
+    if (!emailRegex.test(form.email)) {
+  tempErr.email = "Invalid email format";
     }
 
     if(!form.password.trim()){
