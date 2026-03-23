@@ -71,17 +71,19 @@ export default function LoginScreen() {
 
     if (!validateForm()) {
       console.log("Error: Please fill up the form");
-      setLoading(false)
+      setLoading(false);
       return;
     }
 
     try {
+      console.log(form);
       await signUp(form.email, form.password);
     } catch (err) {
       alert("Signup failed");
       console.log("Signup failed");
     } finally {
       setLoading(false);
+      setForm(DEFAULT_FORM)
     }
   };
 
@@ -91,7 +93,7 @@ export default function LoginScreen() {
         <Text style={styles.title}>Welcome</Text>
         <Text style={styles.subtitle}>Sign Up to get started</Text>
         <View style={styles.form}>
-          {/* <TextInput
+          <TextInput
             placeholder="Name"
             placeholderTextColor={"#999"}
             keyboardType="default"
@@ -99,6 +101,7 @@ export default function LoginScreen() {
             autoCapitalize="none"
             value=""
             style={styles.input}
+            
           />
           <TextInput
             placeholder="Phone"
@@ -107,7 +110,7 @@ export default function LoginScreen() {
             autoComplete="tel-device"
             autoCapitalize="none"
             style={styles.input}
-          /> */}
+          />
           <TextInput
             placeholder="Email"
             placeholderTextColor={"#999"}
@@ -129,7 +132,7 @@ export default function LoginScreen() {
             secureTextEntry
             style={styles.input}
             value={form.password}
-            onChangeText={(text) => handleChange("email", text)}
+            onChangeText={(text) => handleChange("password", text)}
           />
           {errors.password ? (
             <Text style={styles.errorText}>{errors.password}</Text>
@@ -137,9 +140,11 @@ export default function LoginScreen() {
 
           <TouchableOpacity style={styles.btn} onPress={handleSignup}>
             {isLoading ? (
-              <View style={{flexDirection:"row", alignItems:"center", gap: 8}}>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+              >
                 <Text style={styles.btn_txt}>Sign Up</Text>
-                <ActivityIndicator size={16} color={"#fff"}/>
+                <ActivityIndicator size={16} color={"#fff"} />
               </View>
             ) : (
               <Text style={styles.btn_txt}>Sign Up</Text>
