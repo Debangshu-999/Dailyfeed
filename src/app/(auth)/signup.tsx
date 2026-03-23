@@ -1,3 +1,4 @@
+import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -7,6 +8,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -21,40 +23,41 @@ const DEFAULT_FORM: FormData = {
 };
 
 interface FormError {
-    email: string,
-    password: string
+  email: string;
+  password: string;
 }
 
 const ERR_FORM: FormError = {
-    email: "",
-    password:""
-}
-
+  email: "",
+  password: "",
+};
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { signUp } = useAuth();
   const [form, setForm] = useState<FormData>(DEFAULT_FORM);
-  const [errors, setErrors] = useState(ERR_FORM)
+  const [isLoading, setLoading] = useState(false);
+  const [errors, setErrors] = useState(ERR_FORM);
 
   const validateForm = () => {
-    let tempErr: FormError = {...ERR_FORM}
+    let tempErr: FormError = { ...ERR_FORM };
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if(!form.email.trim()){
-        tempErr.email = "Email is required"
+    if (!form.email.trim()) {
+      tempErr.email = "Email is required";
     }
 
     if (!emailRegex.test(form.email)) {
-  tempErr.email = "Invalid email format";
+      tempErr.email = "Invalid email format";
     }
 
-    if(!form.password.trim()){
-        tempErr.password = "Password is required"
+    if (!form.password.trim()) {
+      tempErr.password = "Password is required";
     }
 
-    setErrors(tempErr)
+    setErrors(tempErr);
 
-    return Object.values(tempErr).every(value => value === "")
-  }
+    return Object.values(tempErr).every((value) => value === "");
+  };
 
   const handleChange = (key: keyof FormData, value: string) => {
     setForm((prev) => ({
@@ -63,11 +66,24 @@ export default function LoginScreen() {
     }));
   };
 
-  const handleSignup = async() => {
-    if(!validateForm()){
-        Alert.alert("Error", "Please fill up the form")
+  const handleSignup = async () => {
+    setLoading(true);
+
+    if (!validateForm()) {
+      console.log("Error: Please fill up the form");
+      setLoading(false)
+      return;
     }
-  }
+
+    try {
+      await signUp(form.email, form.password);
+    } catch (err) {
+      alert("Signup failed");
+      console.log("Signup failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView edges={["top", "bottom"]} style={styles.container}>
@@ -102,6 +118,10 @@ export default function LoginScreen() {
             value={form.email}
             onChangeText={(text) => handleChange("email", text)}
           />
+          {errors.email ? (
+            <Text style={styles.errorText}>{errors.email}</Text>
+          ) : null}
+
           <TextInput
             placeholder="Password"
             placeholderTextColor={"#999"}
@@ -111,9 +131,19 @@ export default function LoginScreen() {
             value={form.password}
             onChangeText={(text) => handleChange("email", text)}
           />
+          {errors.password ? (
+            <Text style={styles.errorText}>{errors.password}</Text>
+          ) : null}
 
           <TouchableOpacity style={styles.btn} onPress={handleSignup}>
-            <Text style={styles.btn_txt}>Sign Up</Text>
+            {isLoading ? (
+              <View style={{flexDirection:"row", alignItems:"center", gap: 8}}>
+                <Text style={styles.btn_txt}>Sign Up</Text>
+                <ActivityIndicator size={16} color={"#fff"}/>
+              </View>
+            ) : (
+              <Text style={styles.btn_txt}>Sign Up</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.link_btn}>
@@ -183,5 +213,8 @@ const styles = StyleSheet.create({
   linkbtn_txt_bold: {
     fontWeight: "600",
     color: "#000",
+  },
+  errorText: {
+    color: "red",
   },
 });
