@@ -5,10 +5,15 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "dailyfeed",
+    "scheme": "berealclone",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/myicon/icon.jpg",
+      "bundleIdentifier": "com.machadop1407.berealclone",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "We need access to your photo library so you can choose photos to upload.",
+        "NSCameraUsageDescription": "We need access to your camera so you can take photos."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +22,15 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
+      ],
+      "package": "com.machadop1407.berealclone"
     },
     "web": {
       "output": "static",

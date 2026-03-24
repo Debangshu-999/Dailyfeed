@@ -1,26 +1,77 @@
-import { AuthProvider } from "@/context/AuthContext";
-import { Stack, useRouter } from "expo-router";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function RootLayout() {
-  let isAuth: boolean = false;
+function RouteGuard() {
   const router = useRouter();
+  const { user } = useAuth();
+  const segments = useSegments();
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  const inAuthGroup = segments[0] === "(auth)";
+  const inTabsGroup = segments[0] === "(tabs)";
+
+  const isStoredTokenExpired = async (): Promise<boolean> => {
+    const expiresAt = await AsyncStorage.getItem("expires_at");
+
+    if (!expiresAt) return true;
+
+    const expiresAtSeconds = Number(expiresAt);
+    const nowSeconds = Math.floor(Date.now() / 1000);
+
+    return nowSeconds >= expiresAtSeconds;
+  };
+
   useEffect(() => {
-    if (!isAuth) {
-      router.replace("/(auth)/login");
-    }
+    const runGuard = async () => {
+      if (!segments.length) return;
 
-    if (isAuth) {
-      router.replace("/(tabs)");
-    }
-  });
+      const expired = await isStoredTokenExpired();
 
+      if (expired) {
+        await AsyncStorage.removeMany(["access_token", "expires_at"]);
+
+        if (!inAuthGroup) {
+          router.replace("/(auth)/login");
+        }
+
+        setIsLoading(false);
+        return;
+      }
+
+      if (!user && !inAuthGroup) {
+        router.replace("/(auth)/login");
+      } else if (user && !inTabsGroup) {
+        router.replace("/(tabs)");
+      }
+
+      setIsLoading(false);
+    };
+
+    runGuard();
+  }, [user, segments]);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(auth)" />
+    </Stack>
+  );
+}
+export default function RootLayout() {
   return (
     <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="(auth)" />
-      </Stack>
+      <RouteGuard />
     </AuthProvider>
   );
 }

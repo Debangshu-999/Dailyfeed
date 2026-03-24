@@ -1,13 +1,12 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -39,9 +38,14 @@ export default function LoginScreen() {
   const [isLoading, setLoading] = useState(false);
   const [errors, setErrors] = useState(ERR_FORM);
 
+//   useEffect(()=>{
+//     router.push("/(auth)/onboarding")
+//   }, [])
+
   const validateForm = () => {
     let tempErr: FormError = { ...ERR_FORM };
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     if (!form.email.trim()) {
       tempErr.email = "Email is required";
     }
@@ -78,12 +82,13 @@ export default function LoginScreen() {
     try {
       console.log(form);
       await signUp(form.email, form.password);
+      router.push("/(auth)/onboarding")
     } catch (err) {
       alert("Signup failed");
       console.log("Signup failed");
     } finally {
       setLoading(false);
-      setForm(DEFAULT_FORM)
+      setForm(DEFAULT_FORM);
     }
   };
 
@@ -93,24 +98,7 @@ export default function LoginScreen() {
         <Text style={styles.title}>Welcome</Text>
         <Text style={styles.subtitle}>Sign Up to get started</Text>
         <View style={styles.form}>
-          <TextInput
-            placeholder="Name"
-            placeholderTextColor={"#999"}
-            keyboardType="default"
-            autoComplete="username"
-            autoCapitalize="none"
-            value=""
-            style={styles.input}
-            
-          />
-          <TextInput
-            placeholder="Phone"
-            placeholderTextColor={"#999"}
-            keyboardType="numeric"
-            autoComplete="tel-device"
-            autoCapitalize="none"
-            style={styles.input}
-          />
+
           <TextInput
             placeholder="Email"
             placeholderTextColor={"#999"}
@@ -168,22 +156,29 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fff",
   },
   content: {
     flex: 1,
     justifyContent: "center",
+    alignItems: "center", // centers horizontally
     padding: 24,
-    marginLeft: 430,
   },
   title: {
     fontSize: 32,
     fontWeight: "bold",
     marginBottom: 8,
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
     marginBottom: 32,
     color: "#666",
+    textAlign: "center",
+  },
+  form: {
+    width: "100%",
+    maxWidth: 400,
   },
   input: {
     backgroundColor: "#f5f5f5",
@@ -192,9 +187,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 16,
     borderWidth: 1,
-  },
-  form: {
-    width: "50%",
+    borderColor: "#ddd",
   },
   btn: {
     backgroundColor: "#000",
@@ -209,7 +202,8 @@ const styles = StyleSheet.create({
   },
   link_btn: {
     marginTop: 24,
-    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
   },
   linkbtn_txt: {
     color: "#666",
