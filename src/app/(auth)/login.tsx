@@ -11,10 +11,12 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useAuth();
 
@@ -52,16 +54,21 @@ export default function LoginScreen() {
             onChangeText={setEmail}
             style={styles.input}
           />
-          <TextInput
-            placeholder="Password..."
-            placeholderTextColor={"#999"}
-            autoComplete="password"
-            secureTextEntry
-            autoCapitalize="none"
-            value={password}
-            onChangeText={setPassword}
-            style={styles.input}
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              placeholder="Password..."
+              placeholderTextColor={"#999"}
+              autoComplete="password"
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              value={password}
+              onChangeText={setPassword}
+              style={styles.passwordInput}
+            />
+            <TouchableOpacity onPress={() => setShowPassword((p) => !p)} style={styles.eyeButton}>
+              <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#999" />
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity style={styles.button} onPress={handleLogin}>
             {isLoading ? (
               <ActivityIndicator size={24} color="#fff" />
@@ -119,6 +126,23 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: "#ddd",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    marginBottom: 16,
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 16,
+    fontSize: 16,
+  },
+  eyeButton: {
+    paddingHorizontal: 14,
   },
   button: {
     backgroundColor: "#000",

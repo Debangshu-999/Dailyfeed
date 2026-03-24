@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   Platform,
   Modal,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
@@ -23,20 +22,20 @@ export default function OnboardingScreen() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [modal, setModal] = useState<{ title: string; message: string } | null>(null);
   const { user, updateUser } = useAuth();
   const router = useRouter();
 
   // Auto-close modal after 3 seconds
   useEffect(() => {
-    if (!showUsernameModal) return;
+    if (!modal) return;
 
     const timer = setTimeout(() => {
-      setShowUsernameModal(false);
+      setModal(null);
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [showUsernameModal]);
+  }, [modal]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -59,7 +58,7 @@ export default function OnboardingScreen() {
     setLoading(true);
 
     if (!username.trim()) {
-      setShowUsernameModal(true);
+      setModal({ title: "Username required", message: "Please enter a username to continue" });
       setLoading(false);
       return;
     }
@@ -77,7 +76,7 @@ export default function OnboardingScreen() {
         .single(); //returns existing
 
       if (existingUser) {
-        Alert.alert("Error", "Username is taken");
+        setModal({ title: "Username taken", message: "That username is already in use" });
         return;
       }
 
@@ -94,12 +93,9 @@ export default function OnboardingScreen() {
         profileImage: profileImageUrl,
         onboardingCompleted: true,
       });
-      router.replace("/(tabs)");
+      // Navigation handled by route guard once user.onboardingCompleted is true
     } catch (error) {
-      Alert.alert(
-        "Error",
-        "Failed to complete the onboarding. Please try again.",
-      );
+      setModal({ title: "Error", message: "Failed to complete onboarding. Please try again." });
       console.error(error);
     } finally {
       setLoading(false);
@@ -182,13 +178,11 @@ export default function OnboardingScreen() {
         </TouchableOpacity>
       </View>
 
-      <Modal visible={showUsernameModal} transparent animationType="fade">
+      <Modal visible={modal !== null} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Username required</Text>
-            <Text style={styles.modalMessage}>
-              Please enter a username to continue
-            </Text>
+            <Text style={styles.modalTitle}>{modal?.title}</Text>
+            <Text style={styles.modalMessage}>{modal?.message}</Text>
           </View>
         </View>
       </Modal>

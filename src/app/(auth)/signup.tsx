@@ -1,6 +1,6 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
 interface FormData {
   email: string;
@@ -37,6 +38,7 @@ export default function LoginScreen() {
   const [form, setForm] = useState<FormData>(DEFAULT_FORM);
   const [isLoading, setLoading] = useState(false);
   const [errors, setErrors] = useState(ERR_FORM);
+  const [showPassword, setShowPassword] = useState(false);
 
 //   useEffect(()=>{
 //     router.push("/(auth)/onboarding")
@@ -113,15 +115,20 @@ export default function LoginScreen() {
             <Text style={styles.errorText}>{errors.email}</Text>
           ) : null}
 
-          <TextInput
-            placeholder="Password"
-            placeholderTextColor={"#999"}
-            autoComplete="password"
-            secureTextEntry
-            style={styles.input}
-            value={form.password}
-            onChangeText={(text) => handleChange("password", text)}
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              placeholder="Password"
+              placeholderTextColor={"#999"}
+              autoComplete="password"
+              secureTextEntry={!showPassword}
+              style={styles.passwordInput}
+              value={form.password}
+              onChangeText={(text) => handleChange("password", text)}
+            />
+            <TouchableOpacity onPress={() => setShowPassword((p) => !p)} style={styles.eyeButton}>
+              <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#999" />
+            </TouchableOpacity>
+          </View>
           {errors.password ? (
             <Text style={styles.errorText}>{errors.password}</Text>
           ) : null}
@@ -188,6 +195,23 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: "#ddd",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    marginBottom: 16,
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 16,
+    fontSize: 16,
+  },
+  eyeButton: {
+    paddingHorizontal: 14,
   },
   btn: {
     backgroundColor: "#000",
