@@ -14,11 +14,11 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="weather"
+        name="saved"
         options={{
-          title: "Weather",
+          title: "Saved",
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? "cloud" : "cloud-outline"} color={color} size={size} />
+            <Ionicons name={focused ? "bookmark" : "bookmark-outline"} color={color} size={size} />
           ),
         }}
       />

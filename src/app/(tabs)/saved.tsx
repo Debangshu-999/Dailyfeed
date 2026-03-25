@@ -60,21 +60,17 @@ function StoryImage({ url, height }: { url?: string; height: number }) {
   }, [url]);
 
   if (!imageUrl) return <View style={[styles.imagePlaceholder, { height }]} />;
-
-  return (
-    <Image source={{ uri: imageUrl }} style={[styles.storyImage, { height }]} contentFit="cover" />
-  );
+  return <Image source={{ uri: imageUrl }} style={[styles.storyImage, { height }]} contentFit="cover" />;
 }
 
-export default function FeedScreen() {
+export default function SavedScreen() {
   const { theme } = useTheme();
   const { user } = useAuth();
   const { width } = useWindowDimensions();
   const [stories, setStories] = useState<HNStory[]>([]);
+  const [savedIds, setSavedIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [savedIds, setSavedIds] = useState<number[]>([]);
 
   const PADDING = 16;
   const GAP = 12;
@@ -82,61 +78,52 @@ export default function FeedScreen() {
   const cardWidth = (width - PADDING * 2 - GAP * (COLUMNS - 1)) / COLUMNS;
   const imageHeight = cardWidth * 0.65;
 
-  async function fetchSavedIds() {
+  async function fetchSaved() {
     if (!user?.id) return;
     const { data } = await supabase
       .from("saved")
       .select("saved_news")
       .eq("id", user.id)
       .single();
-    if (data?.saved_news) setSavedIds(data.saved_news);
-  }
 
-  async function fetchStories() {
-    try {
-      setError(null);
-      const ids: number[] = await fetch(`${BASE}/topstories.json`).then((r) => r.json());
-      const top50 = ids.slice(0, 50);
-      const items: HNStory[] = await Promise.all(
-        top50.map((id: number) => fetch(`${BASE}/item/${id}.json`).then((r) => r.json()))
-      );
-      setStories(items.filter(Boolean));
-    } catch {
-      setError("Failed to load stories. Pull down to retry.");
+    const ids: number[] = data?.saved_news ?? [];
+    setSavedIds(ids);
+
+    if (ids.length === 0) {
+      setStories([]);
+      return;
     }
-  }
 
-  useEffect(() => {
-    fetchStories().finally(() => setLoading(false));
-  }, []);
+    const items: HNStory[] = await Promise.all(
+      ids.map((id) => fetch(`${BASE}/item/${id}.json`).then((r) => r.json()))
+    );
+    setStories(items.filter(Boolean));
+  }
 
   useFocusEffect(
     useCallback(() => {
-      fetchSavedIds();
+      setLoading(true);
+      fetchSaved().finally(() => setLoading(false));
     }, [user?.id])
   );
 
   async function onRefresh() {
     setRefreshing(true);
-    await fetchStories();
+    await fetchSaved();
     setRefreshing(false);
   }
 
-  async function toggleSave(storyId: number) {
+  async function unsave(storyId: number) {
     if (!user?.id) return;
-    const isSaved = savedIds.includes(storyId);
-    const newSaved = isSaved
-      ? savedIds.filter((id) => id !== storyId)
-      : [...savedIds, storyId];
+    const newSaved = savedIds.filter((id) => id !== storyId);
     setSavedIds(newSaved);
-    const { error } = await supabase
+    setStories((prev) => prev.filter((s) => s.id !== storyId));
+    await supabase
       .from("saved")
       .upsert({ id: user.id, saved_news: newSaved });
-    if (error) console.error("toggleSave error:", error);
   }
 
   function renderItem({ item }: { item: HNStory }) {
-    const isSaved = savedIds.includes(item.id);
     return (
       <TouchableOpacity
         style={[styles.card, { backgroundColor: theme.card, width: cardWidth }]}
@@ -160,12 +147,8 @@ export default function FeedScreen() {
               <Ionicons name="time-outline" size={11} color={theme.subtext} />
               <Text style={[styles.metaText, { color: theme.subtext }]}>{timeAgo(item.time)}</Text>
             </View>
-            <TouchableOpacity onPress={() => toggleSave(item.id)} hitSlop={8} style={styles.bookmark}>
-              <Ionicons
-                name={isSaved ? "bookmark" : "bookmark-outline"}
-                size={16}
-                color={isSaved ? "coral" : theme.subtext}
-              />
+            <TouchableOpacity onPress={() => unsave(item.id)} hitSlop={8} style={styles.bookmark}>
+              <Ionicons name="bookmark" size={16} color="coral" />
             </TouchableOpacity>
           </View>
         </View>
@@ -187,19 +170,22 @@ export default function FeedScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.text} />}
         ListHeaderComponent={
           <View style={styles.headerBlock}>
-            <Text style={[styles.header, { color: theme.text }]}>Feed</Text>
-            <Text style={[styles.headerSub, { color: theme.subtext }]}>Top stories today</Text>
+            <Text style={[styles.header, { color: theme.text }]}>Saved</Text>
+            <Text style={[styles.headerSub, { color: theme.subtext }]}>Your bookmarked stories</Text>
           </View>
         }
         ListEmptyComponent={
           loading ? (
             <ActivityIndicator size="large" color={theme.text} style={{ marginTop: 60 }} />
-          ) : error ? (
+          ) : (
             <View style={styles.emptyContainer}>
-              <Ionicons name="wifi-outline" size={48} color={theme.subtext} />
-              <Text style={[styles.emptyText, { color: theme.subtext }]}>{error}</Text>
+              <Ionicons name="bookmark-outline" size={52} color={theme.subtext} />
+              <Text style={[styles.emptyText, { color: theme.text }]}>No saved stories yet</Text>
+              <Text style={[styles.emptySubtext, { color: theme.subtext }]}>
+                Tap the bookmark icon on any story in Feed to save it here
+              </Text>
             </View>
-          ) : null
+          )
         }
       />
     </SafeAreaView>
@@ -231,6 +217,7 @@ const styles = StyleSheet.create({
   metaItem: { flexDirection: "row", alignItems: "center", gap: 3 },
   metaText: { fontSize: 11, fontWeight: "500" },
   bookmark: { marginLeft: "auto" },
-  emptyContainer: { alignItems: "center", marginTop: 80, gap: 12 },
-  emptyText: { fontSize: 14, textAlign: "center", paddingHorizontal: 32 },
+  emptyContainer: { alignItems: "center", marginTop: 100, gap: 12 },
+  emptyText: { fontSize: 17, fontWeight: "700" },
+  emptySubtext: { fontSize: 13, textAlign: "center", paddingHorizontal: 40, lineHeight: 20 },
 });
